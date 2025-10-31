@@ -298,7 +298,7 @@ public class DB_EnterpriseH2 {
             System.out.println("Ingresa el código del empleado que quieras eliminar: ");
             int codigo = scanner.nextInt();
             
-            // CORREGIDO: Sintaxis H2 para DELETE
+            // Sintaxis H2 para DELETE
             String sql = "DELETE FROM t_empleados WHERE codigo_empleado = ?";
             
             try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -319,3 +319,4 @@ public class DB_EnterpriseH2 {
     }
 
 }
+
