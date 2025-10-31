@@ -1,4 +1,3 @@
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -31,7 +30,7 @@ public class DB_Enterprise {
 
             /* Añadimos otros 2 setProperty para poner 
             en el nombre de la base de datos */
-            properties.setProperty("nameDB", "adat3");
+            properties.setProperty("nameDB", "SA");
 
             properties.store(new FileOutputStream("config.ini"), "Configuracion de la base de datos");
         } else {
@@ -42,18 +41,22 @@ public class DB_Enterprise {
         }
 
         if (driverHSQLDB.equals("hsqldb")) {
-             url = "jbdc:hsqldb"; 
+             url = "jdbc:hsqldb:file:/home/alumno/Escritorio/BBDD/db_empresa;shutdown=true;hsqldb.lock_file=false"; 
 
         }else if (driverH2.equals("h2")) {
-             url = "jbdc:h2"; 
+             url = "jdbc:h2:file:./db_empresa_h2;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1"; 
         }
         try{
-          Connection conn = DriverManager.getConnection(url);
+          Connection conn = DriverManager.getConnection(url, "SA", "");
           System.out.println("La conexion se realizo correctamente " + url);
         }catch(SQLException e){
             e.printStackTrace();
         }
+        
+
+
     }
+    
 
     
 }

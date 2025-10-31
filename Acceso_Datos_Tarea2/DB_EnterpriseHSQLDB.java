@@ -1,19 +1,123 @@
 import java.sql.*;
 import java.util.Scanner;
+import java.io.*;
+import java.util.Properties;
 
 public class DB_EnterpriseHSQLDB {
-    private static final String URL = "jdbc:h2://localhost:3306/adat3";
-    private static final String USER = "dam2";
-    private static final String PASSWORD = "asdf.1234";
+    private static String URL;
+    private static final String USER = "SA";
+    private static final String PASSWORD = "";
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.hsqldb.jdbc.JDBCDriver");
+            cargarConfiguracion();
+            inicializarBaseDatos();
+            
             menuPrincipal();
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
+            e.printStackTrace();
         }
+    }
+    
+    private static void cargarConfiguracion() throws IOException {
+        File configFile = new File("config.ini");
+        Properties properties = new Properties();
+        
+        if (!configFile.exists()) {
+            // Crear configuración por defecto
+            properties.setProperty("database.path", "./db_empresa");
+            properties.store(new FileOutputStream(configFile), "Configuración HSQLDB");
+            System.out.println("Archivo config.ini creado con ruta por defecto");
+        }
+        
+        properties.load(new FileInputStream(configFile));
+        String dbPath = properties.getProperty("database.path", "./db_empresa");
+        URL = "jdbc:hsqldb:file:" + dbPath + ";shutdown=true;hsqldb.lock_file=false";
+        
+        System.out.println("Conectando a: " + URL);
+    }
+    
+    public static void inicializarBaseDatos() {
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
+            // Verificar si las tablas ya existen
+            DatabaseMetaData meta = conn.getMetaData();
+            ResultSet tables = meta.getTables(null, null, "T_CENTROS", null);
+            
+            if (!tables.next()) {
+                // Las tablas no existen, crearlas
+                System.out.println("Creando base de datos...");
+                crearEsquemaCompleto(conn);
+            } else {
+                System.out.println("Base de datos ya existe.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al inicializar BD: " + e.getMessage());
+        }
+    }
+    
+    public static void crearEsquemaCompleto(Connection conn) throws SQLException {
+        Statement stmt = conn.createStatement();
+        
+        // Eliminar tablas si existen
+        stmt.execute("DROP TABLE t_empleados IF EXISTS");
+        stmt.execute("DROP TABLE t_departamentos IF EXISTS");
+        stmt.execute("DROP TABLE t_centros IF EXISTS");
+        
+        // Crear tablas
+        stmt.execute("CREATE TABLE t_centros (" +
+                    "codigo_centro INTEGER PRIMARY KEY, " +
+                    "nombre_centro VARCHAR(21) NOT NULL, " +
+                    "ubicacion VARCHAR(50) NOT NULL)");
+        
+        stmt.execute("CREATE TABLE t_departamentos (" +
+                    "codigo_departamento INTEGER PRIMARY KEY, " +
+                    "codigo_centro INTEGER NOT NULL, " +
+                    "codigo_director INTEGER NOT NULL, " +
+                    "tipo_director CHAR(1) NOT NULL, " +
+                    "presupuesto_departamento DECIMAL(10,2) NOT NULL, " +
+                    "codigo_departamento_superior INTEGER, " +
+                    "nombre_departamento VARCHAR(50) NOT NULL, " +
+                    "FOREIGN KEY (codigo_centro) REFERENCES t_centros(codigo_centro))");
+        
+        stmt.execute("CREATE TABLE t_empleados (" +
+                    "codigo_empleado INTEGER PRIMARY KEY, " +
+                    "codigo_departamento INTEGER NOT NULL, " +
+                    "extension_telefonica_empleado SMALLINT NOT NULL, " +
+                    "fecha_nacimiento_empleado DATE NOT NULL, " +
+                    "fecha_ingreso_empleado DATE NOT NULL, " +
+                    "salario_base_empleado DECIMAL(10,2) NOT NULL, " +
+                    "comision_empleado DECIMAL(10,2), " +
+                    "numero_hijos_empleado SMALLINT NOT NULL, " +
+                    "nombre_empleado VARCHAR(50) NOT NULL, " +
+                    "FOREIGN KEY (codigo_departamento) REFERENCES t_departamentos(codigo_departamento))");
+        
+        // Insertar datos de CENTROS
+        stmt.execute("INSERT INTO t_centros VALUES (10, 'SEDE CENTRAL', 'C/ ALCALA, 820, MADRID')");
+        stmt.execute("INSERT INTO t_centros VALUES (20, 'RELACION CON CLIENTES', 'C/ ATOCHA, 405, MADRID')");
+        
+        // Insertar datos de DEPARTAMENTOS
+        stmt.execute("INSERT INTO t_departamentos VALUES (100, 10, 260, 'P', 120000, NULL, 'DIRECCION GENERAL')");
+        stmt.execute("INSERT INTO t_departamentos VALUES (110, 20, 180, 'P', 15000, 100, 'DIRECCION COMERCIAL')");
+        stmt.execute("INSERT INTO t_departamentos VALUES (111, 20, 180, 'F', 11000, 110, 'SECTOR INDUSTRIAL')");
+        stmt.execute("INSERT INTO t_departamentos VALUES (112, 20, 270, 'P', 9000, 110, 'SECTOR SERVICIOS')");
+        stmt.execute("INSERT INTO t_departamentos VALUES (120, 10, 150, 'F', 3000, 100, 'ORGANIZACION')");
+        stmt.execute("INSERT INTO t_departamentos VALUES (121, 10, 150, 'P', 2000, 120, 'PERSONAL')");
+        stmt.execute("INSERT INTO t_departamentos VALUES (122, 10, 350, 'P', 6000, 120, 'PROCESO DE DATOS')");
+        stmt.execute("INSERT INTO t_departamentos VALUES (130, 10, 310, 'P', 2000, 100, 'FINANZAS')");
+        
+        // Insertar EMPLEADOS COMPLETOS (corregidos los departamentos)
+        stmt.execute("INSERT INTO t_empleados VALUES (110, 121, 350, '1949-10-11', '1970-02-15', 3100, NULL, 3, 'PONS, CESAR')");
+        stmt.execute("INSERT INTO t_empleados VALUES (120, 112, 840, '1955-06-09', '1988-10-01', 3500, 1100, 1, 'LASA, MARIO')");
+        stmt.execute("INSERT INTO t_empleados VALUES (130, 112, 810, '1965-09-09', '1989-02-01', 2900, 1100, 2, 'TEROL, LUCIANO')");
+        stmt.execute("INSERT INTO t_empleados VALUES (150, 121, 340, '1950-08-10', '1968-01-15', 4400, NULL, 0, 'PEREZ, JULIO')");
+        stmt.execute("INSERT INTO t_empleados VALUES (160, 111, 740, '1959-07-09', '1988-11-11', 3100, 1100, 2, 'AGUIRRE, AUREO')");
+        stmt.execute("INSERT INTO t_empleados VALUES (180, 110, 508, '1954-10-18', '1976-03-18', 4800, 500, 2, 'PEREZ, MARCOS')");
+        
+        System.out.println("Base de datos creada exitosamente!");
+        stmt.close();
     }
 
     private static void menuPrincipal() {
@@ -47,15 +151,13 @@ public class DB_EnterpriseHSQLDB {
         }
     }
 
-    // VER TODOS LOS EMPLEADOS
     private static void verEmpleados() {
         String sql = "SELECT e.*, d.nombre_departamento FROM t_empleados e " +
-                    "JOIN t_departamentos d ON e.codigo_departamento = d.codigo_departamento";
+                     "JOIN t_departamentos d ON e.codigo_departamento = d.codigo_departamento";
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
             System.out.println("\n--- EMPLEADOS ---");
             while (rs.next()) {
@@ -70,7 +172,6 @@ public class DB_EnterpriseHSQLDB {
         }
     }
 
-    // AGREGAR EMPLEADO
     private static void agregarEmpleado() {
         try {
             System.out.println("\n--- NUEVO EMPLEADO ---");
@@ -83,8 +184,9 @@ public class DB_EnterpriseHSQLDB {
             String nombre = scanner.nextLine();
             System.out.print("Salario: ");
             double salario = scanner.nextDouble();
+            scanner.nextLine(); // Limpiar buffer
             System.out.print("Fecha ingreso (YYYY-MM-DD): ");
-            String fecha = scanner.next();
+            String fecha = scanner.nextLine();
 
             String sql = "INSERT INTO t_empleados (codigo_empleado, codigo_departamento, " +
                         "extension_telefonica_empleado, fecha_nacimiento_empleado, " +
@@ -108,7 +210,6 @@ public class DB_EnterpriseHSQLDB {
         }
     }
 
-    // BUSCAR EMPLEADOS
     private static void buscarEmpleados() {
         System.out.print("\nBuscar por nombre: ");
         String nombre = scanner.nextLine();
@@ -133,13 +234,12 @@ public class DB_EnterpriseHSQLDB {
         }
     }
 
-    // VER DEPARTAMENTOS
     private static void verDepartamentos() {
         String sql = "SELECT * FROM t_departamentos";
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-            PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
             System.out.println("\n--- DEPARTAMENTOS ---");
             while (rs.next()) {
@@ -190,29 +290,26 @@ public class DB_EnterpriseHSQLDB {
     }
     
     private static void eliminarEmpleado() {
-    	
-		try {
-			System.out.println("Ingresa el codigo del empleado que quieras eliminar: ");
-			int codigo = scanner.nextInt();
-			
-			String sql = "DELETE e FROM t_empleados e " +
-                    "JOIN t_departamentos d ON e.codigo_departamento = d.codigo_departamento " +
-                    "WHERE e.codigo_empleado = ?";
-			
-			
-			try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-					PreparedStatement ps = conn.prepareStatement(sql)) {
-				
-				ps.setInt(1, codigo);
-				ps.executeUpdate();
-				System.out.println("Empleado eliminado correctamente");
-			}
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-    
-    
-    
+        try {
+            System.out.println("Ingresa el código del empleado que quieras eliminar: ");
+            int codigo = scanner.nextInt();
+            
+            String sql = "DELETE FROM t_empleados WHERE codigo_empleado = ?";
+            
+            try(Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+                
+                ps.setInt(1, codigo);
+                int filasAfectadas = ps.executeUpdate();
+                
+                if (filasAfectadas > 0) {
+                    System.out.println("Empleado eliminado correctamente");
+                } else {
+                    System.out.println("No se encontró el empleado con ese código");
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error al eliminar: " + e.getMessage());
+        }
+    }
 }
