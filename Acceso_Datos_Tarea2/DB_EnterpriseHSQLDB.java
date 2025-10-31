@@ -3,7 +3,8 @@ import java.util.Scanner;
 import java.io.*;
 import java.util.Properties;
 
-public class DB_EnterpriseHSQLDB {
+public class DB_EnterpriseHSQLDB {	
+    // Hemos usado el gestor de bases de datos HSQLDB
     private static String URL;
     private static final String USER = "SA";
     private static final String PASSWORD = "";
@@ -312,4 +313,5 @@ public class DB_EnterpriseHSQLDB {
             System.out.println("Error al eliminar: " + e.getMessage());
         }
     }
+
 }
