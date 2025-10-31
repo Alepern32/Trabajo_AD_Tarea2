@@ -6,7 +6,7 @@ public class CrearJar {
     public static void main(String[] args) throws IOException {
         System.out.println("=== GENERADOR DE JAR PORTABLE ===");
         
-        // Creamos
+        // Inicilizamos el codigo de la clase DB_EnterpriseHSQLDB.java
         System.out.println("1. Compilando DB_EnterpriseHSQLDB...");
         ProcessBuilder compilar = new ProcessBuilder(
             "javac", "-cp", "hsqldb-2.7.2.jar", "DB_EnterpriseHSQLDB.java"
