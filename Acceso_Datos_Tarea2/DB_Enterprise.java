@@ -11,6 +11,9 @@ public class DB_Enterprise {
 
     public static void main(String[] args) throws IOException {
 
+        /* Definimos 4 variables que contendran la informacion de nuestro archivo de 
+        configuracion */
+        
         String driverHSQLDB = "";
         String driverH2 = "";
         String nameDB = "";
@@ -32,14 +35,21 @@ public class DB_Enterprise {
             en el nombre de la base de datos */
             properties.setProperty("nameDB", "SA");
 
+            /* Almacenamos las propiedades a un archivo config.ini para usarlo despues para aplicar las configuraciones */
             properties.store(new FileOutputStream("config.ini"), "Configuracion de la base de datos");
+            
         } else {
+             
+             /* Almacenamos en variables las propiedades de nuestro archivo de configuracion externo */
              properties.load(new FileInputStream(f));
              driverHSQLDB = properties.getProperty("driverHSQLDB");
              driverH2 = properties.getProperty("driverH2");
              nameDB = properties.getProperty("nameDB");
         }
 
+        /* Comparamos dependiendo de que gestor de base de datos se use sera diferente su url
+        para ser usada en la conexion */
+        
         if (driverHSQLDB.equals("hsqldb")) {
              url = "jdbc:hsqldb:file:/home/alumno/Escritorio/BBDD/db_empresa;shutdown=true;hsqldb.lock_file=false"; 
 
@@ -47,6 +57,7 @@ public class DB_Enterprise {
              url = "jdbc:h2:file:./db_empresa_h2;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1"; 
         }
         try{
+          /* Creamos la conexion de nuestra BBDD con la url con el nombre de usuario y su password*/
           Connection conn = DriverManager.getConnection(url, "SA", "");
           System.out.println("La conexion se realizo correctamente " + url);
         }catch(SQLException e){
@@ -59,4 +70,5 @@ public class DB_Enterprise {
     
 
     
+
 }
