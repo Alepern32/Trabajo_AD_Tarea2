@@ -3,6 +3,7 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class DB_EnterpriseH2 {
+	// Hemos usado el gestor de bases de datos H2
 	private static final String URL = "jdbc:h2:file:./db_empresa_h2;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
 	private static final String USER = "SA";
     private static final String PASSWORD = "";
@@ -316,4 +317,5 @@ public class DB_EnterpriseH2 {
             System.out.println("Error al eliminar: " + e.getMessage());
         }
     }
+
 }
