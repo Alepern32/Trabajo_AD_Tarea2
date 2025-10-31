@@ -6,7 +6,7 @@ public class CrearJar {
     public static void main(String[] args) throws IOException {
         System.out.println("=== GENERADOR DE JAR PORTABLE ===");
         
-        // 1. Compilar el código principal
+        // Creamos
         System.out.println("1. Compilando DB_EnterpriseHSQLDB...");
         ProcessBuilder compilar = new ProcessBuilder(
             "javac", "-cp", "hsqldb-2.7.2.jar", "DB_EnterpriseHSQLDB.java"
@@ -18,7 +18,7 @@ public class CrearJar {
             e.printStackTrace();
         }
         
-        // 2. Crear archivo MANIFEST.MF
+        // Crear el archivo manifest
         System.out.println("2. Creando MANIFEST.MF...");
         String manifest = 
             "Manifest-Version: 1.0\n" +
@@ -27,7 +27,7 @@ public class CrearJar {
         
         Files.write(Paths.get("MANIFEST.MF"), manifest.getBytes());
         
-        // 3. Crear archivo config.ini si no existe
+        // Crear el archivo config.ini sino existe 
         System.out.println("3. Creando config.ini...");
         String config = 
             "#Configuración HSQLDB\n" +
@@ -37,7 +37,7 @@ public class CrearJar {
             Files.write(Paths.get("config.ini"), config.getBytes());
         }
         
-        // 4. Generar el JAR
+        // Generar el JAR a apartir del ProcessBuilder
         System.out.println("4. Generando JAR...");
         ProcessBuilder crearJar = new ProcessBuilder(
             "jar", "cfm", "EmpresaHSQLDB.jar", "MANIFEST.MF", 
@@ -50,7 +50,7 @@ public class CrearJar {
             e.printStackTrace();
         }
         
-        // 5. Limpiar archivos temporales
+        // Eliminamos los arhcivos temporales
         System.out.println("5. Limpiando archivos temporales...");
         Files.deleteIfExists(Paths.get("DB_EnterpriseHSQLDB.class"));
         Files.deleteIfExists(Paths.get("MANIFEST.MF"));
